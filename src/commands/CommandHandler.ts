@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import { Mjolnir } from "../Mjolnir";
+import { execListWordList } from "./ListWordListCommand";
 import { execStatusCommand } from "./StatusCommand";
 import { execBanCommand, execUnbanCommand } from "./UnbanBanCommand";
 import { execDumpRulesCommand } from "./DumpRulesCommand";
@@ -48,6 +49,8 @@ export async function handleCommand(roomId: string, event: any, mjolnir: Mjolnir
             return await execStatusCommand(roomId, event, mjolnir);
         } else if (parts[1] === 'ban' && parts.length > 2) {
             return await execBanCommand(roomId, event, mjolnir, parts);
+        } else if (parts[1] === 'wordlist' && parts.length === 1) {
+            return await execListWordList(roomId, event, mjolnir);
         } else if (parts[1] === 'unban' && parts.length > 2) {
             return await execUnbanCommand(roomId, event, mjolnir, parts);
         } else if (parts[1] === 'rules') {
