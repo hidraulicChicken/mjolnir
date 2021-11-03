@@ -17,7 +17,7 @@ limitations under the License.
 import { Mjolnir } from "../Mjolnir";
 import { RichReply } from "matrix-bot-sdk";
 
-// !mjolnir shutdown room <room>
+// !mjolnir shutdown room <room> [<message>]
 export async function execShutdownRoomCommand(roomId: string, event: any, mjolnir: Mjolnir, parts: string[]) {
     const victim = parts[3];
 
@@ -26,9 +26,10 @@ export async function execShutdownRoomCommand(roomId: string, event: any, mjolni
         const message = "I am not a Synapse administrator, or the endpoint is blocked";
         const reply = RichReply.createFor(roomId, event, message, message);
         reply['msgtype'] = "m.notice";
-        return mjolnir.client.sendMessage(roomId, reply);
+        mjolnir.client.sendMessage(roomId, reply);
+        return;
     }
 
-    await mjolnir.shutdownSynapseRoom(await mjolnir.client.resolveRoom(victim));
+    await mjolnir.shutdownSynapseRoom(await mjolnir.client.resolveRoom(victim), parts[4]);
     await mjolnir.client.unstableApis.addReactionToEvent(roomId, event['event_id'], '✅');
 }

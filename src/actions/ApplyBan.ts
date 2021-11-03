@@ -21,7 +21,6 @@ import config from "../config";
 import { logMessage } from "../LogProxy";
 import { LogLevel } from "matrix-bot-sdk";
 import { ERROR_KIND_FATAL, ERROR_KIND_PERMISSION } from "../ErrorCache";
-import { redactUserMessagesIn } from "../utils";
 
 /**
  * Applies the member bans represented by the ban lists to the provided rooms, returning the
@@ -33,7 +32,6 @@ import { redactUserMessagesIn } from "../utils";
 export async function applyUserBans(lists: BanList[], roomIds: string[], mjolnir: Mjolnir): Promise<RoomUpdateError[]> {
     // We can only ban people who are not already banned, and who match the rules.
     const errors: RoomUpdateError[] = [];
-    let bansApplied = 0;
     for (const roomId of roomIds) {
         try {
             // We specifically use sendNotice to avoid having to escape HTML
@@ -70,13 +68,12 @@ export async function applyUserBans(lists: BanList[], roomIds: string[], mjolnir
                             if (!config.noop) {
                                 await mjolnir.client.banUser(member.userId, roomId, userRule.reason);
                                 if (mjolnir.automaticRedactGlobs.find(g => g.test(userRule.reason.toLowerCase()))) {
-                                    await redactUserMessagesIn(mjolnir.client, member.userId, [roomId]);
+                                    mjolnir.queueRedactUserMessagesIn(member.userId, roomId);
                                 }
                             } else {
                                 await logMessage(LogLevel.WARN, "ApplyBan", `Tried to ban ${member.userId} in ${roomId} but Mjolnir is running in no-op mode`, roomId);
                             }
 
-                            bansApplied++;
                             banned = true;
                             break;
                         }

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Matrix.org Foundation C.I.C.
+Copyright 2019-2021 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LogService, MatrixClient } from "matrix-bot-sdk";
+import { extractRequestError, LogService, MatrixClient } from "matrix-bot-sdk";
 import { ListRule } from "./ListRule";
 
 export const RULE_USER = "m.room.rule.user";
@@ -28,7 +28,7 @@ export const ALL_RULE_TYPES = [...USER_RULE_TYPES, ...ROOM_RULE_TYPES, ...SERVER
 
 export const SHORTCODE_EVENT_TYPE = "org.matrix.mjolnir.shortcode";
 
-export function ruleTypeToStable(rule: string, unstable = true): string {
+export function ruleTypeToStable(rule: string, unstable = true): string|null {
     if (USER_RULE_TYPES.includes(rule)) return unstable ? USER_RULE_TYPES[USER_RULE_TYPES.length - 1] : RULE_USER;
     if (ROOM_RULE_TYPES.includes(rule)) return unstable ? ROOM_RULE_TYPES[ROOM_RULE_TYPES.length - 1] : RULE_ROOM;
     if (SERVER_RULE_TYPES.includes(rule)) return unstable ? SERVER_RULE_TYPES[SERVER_RULE_TYPES.length - 1] : RULE_SERVER;
@@ -37,7 +37,7 @@ export function ruleTypeToStable(rule: string, unstable = true): string {
 
 export default class BanList {
     private rules: ListRule[] = [];
-    private shortcode: string = null;
+    private shortcode: string|null = null;
 
     constructor(public readonly roomId: string, public readonly roomRef, private client: MatrixClient) {
     }
@@ -50,7 +50,7 @@ export default class BanList {
         const currentShortcode = this.shortcode;
         this.shortcode = newShortcode;
         this.client.sendStateEvent(this.roomId, SHORTCODE_EVENT_TYPE, '', {shortcode: this.shortcode}).catch(err => {
-            LogService.error("BanList", err);
+            LogService.error("BanList", extractRequestError(err));
             if (this.shortcode === newShortcode) this.shortcode = currentShortcode;
         });
     }
@@ -85,7 +85,7 @@ export default class BanList {
                 continue;
             }
 
-            let kind: string = null;
+            let kind: string|null = null;
             if (USER_RULE_TYPES.includes(event['type'])) {
                 kind = RULE_USER;
             } else if (ROOM_RULE_TYPES.includes(event['type'])) {
